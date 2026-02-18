@@ -1,15 +1,6 @@
-#include <cstdint>
-#include <iostream>
-#include <linux/limits.h>
-#include <raylib.h>
 #include "checkers.h"
 
-#define NUM_ROWS 8
-#define NUM_COLUMNS 8
 
-void print_board_data(uint16_t arr[][NUM_COLUMNS]);
-void draw_board(uint16_t arr[][NUM_COLUMNS]);
-void init_board(uint16_t arr[][NUM_COLUMNS]);
 
 
 int main() {
@@ -19,6 +10,11 @@ int main() {
 
   const int num_rows = NUM_ROWS;
   const int num_columns = NUM_COLUMNS;
+
+  uint8_t column_num = -1;
+  uint8_t row_num = -1; 
+
+  Vector2 mouse_pos = {-1.0, -1.0};
 
 
   uint16_t board[num_rows][num_columns] = {};
@@ -32,10 +28,28 @@ int main() {
   {
 
     // Logic
-    draw_board(board);
+    
+    
+    if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+    {
+      mouse_pos = GetMousePosition();
+
+      std::cout << "Left Mouse Click at " << std::to_string(mouse_pos.x) << ", " << std::to_string(mouse_pos.y) << " )\n";
+
+      column_num = mouse_pos.x / TILE_DIMENSION;
+      row_num = mouse_pos.y / TILE_DIMENSION;
+
+      std::cout << "Left Mouse Click at Row: " << std::to_string(row_num) << ", Column: " << std::to_string(column_num) << "\n";
+
+      board[row_num][column_num] |= SELECTED_PIECE;
+      
+    }
     
 
+
     // Drawing
+    draw_board(board);
+
     BeginDrawing();
     ClearBackground(DARKGRAY);
 
@@ -48,10 +62,26 @@ int main() {
   return 0;
 }
 
+/// End of Main /// 
+
+
+
+
+
+
+
+
+
+
+
+
+
+/// Subordinate Functions /// 
+
 void draw_board(uint16_t arr[][NUM_COLUMNS])
 {
-  const int tile_width = 135;
-  const int tile_height = 135;
+  const int tile_width =  TILE_DIMENSION;
+  const int tile_height = TILE_DIMENSION;
   uint16_t tile = 0x0000;
   int tile_x = 0;
   int tile_y = 0;
@@ -81,11 +111,13 @@ void draw_board(uint16_t arr[][NUM_COLUMNS])
       }
 
 
-      tile_x += tile_width; // Update tile's new right hand pos
+
+
+
 
       // Draw piece
 
-      piece_x = tile_x - tile_width / 2;
+      piece_x = tile_x + tile_width / 2;
       piece_y = tile_y + tile_height / 2;
 
       if(tile & OCCUPIED_TILE)
@@ -106,7 +138,17 @@ void draw_board(uint16_t arr[][NUM_COLUMNS])
         }
       }
 
+      tile_x += tile_width; // Update tile's new right hand pos
 
+
+      // for selected piece redraw both tile and piece
+      // can only ever be one at a time, so not a big deal to redraw
+      if(tile & SELECTED_PIECE) // check for selected status bit
+      {
+        std::cout << "yee yee\n";
+        DrawRectangle(tile_x, tile_y, tile_width, tile_height, GREEN);
+        DrawRectangleLines(tile_x, tile_y, tile_width, tile_height, WHITE);
+      }
 
     }
     tile_x = 0;
