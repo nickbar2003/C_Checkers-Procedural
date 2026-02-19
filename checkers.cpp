@@ -2,6 +2,12 @@
 
 
 
+Color PLAYABLE_COLOR = {0, 129, 167, 255}; // Ocean Blue
+Color OCEAN_BLUE_SELECTED = {0, 129, 167, 100};
+Color AQUA_BLUE = {0, 175, 185, 255};
+Color BLANK_COLOR = {253, 252, 220, 255}; // Blank
+Color PLAYER_TWO_COLOR = {250, 207, 166, 255};
+Color PLAYER_ONE_COLOR = {240, 113, 103, 255};
 
 int main() {
 
@@ -73,83 +79,69 @@ int main() {
 
 
 
-
-
-
-/// Subordinate Functions /// 
-
 void draw_board(uint16_t arr[][NUM_COLUMNS])
 {
   const int tile_width =  TILE_DIMENSION;
   const int tile_height = TILE_DIMENSION;
+
   uint16_t tile = 0x0000;
   int tile_x = 0;
   int tile_y = 0;
 
   int piece_x = 0;
   int piece_y = 0;
-  
+
+  Color tile_color = {0, 0, 0, 0};
+  Color piece_color = {0, 0, 0, 0};
+
   for(int r = 0; r < NUM_ROWS; r++) // Iterate Rows
   {
 
     for(int c = 0; c < NUM_COLUMNS; c++) // For each tile in each row
     {
-
-      // Draw tile
-
       tile = arr[r][c];
 
-      if(tile & COLORED_TILE) // Check for color bit
+      // Drawing
+
+      if(tile & COLORED_TILE) 
       {
-        DrawRectangle(tile_x, tile_y, tile_width, tile_height, DARKBLUE);
-        DrawRectangleLines(tile_x, tile_y, tile_width, tile_height, BLACK);
+        tile_color = PLAYABLE_COLOR;
       }
-      else // Color bit off == white tile
+      else 
       {
-        DrawRectangle(tile_x, tile_y, tile_width, tile_height, WHITE);
-        DrawRectangleLines(tile_x, tile_y, tile_width, tile_height, BLACK);
+        tile_color = BLANK_COLOR;
+      }
+
+      if(tile & OCCUPIED_TILE)
+      {
+        if(tile & PLAYER_ONE_PIECE) // Occupied by player 1
+        {
+          piece_color = PLAYER_ONE_COLOR;
+        }
+        else // Occupied by player 2
+        {
+          piece_color = PLAYER_TWO_COLOR;
+        }
       }
 
 
-
-
-
-
-      // Draw piece
+      DrawRectangle(tile_x, tile_y, tile_width, tile_height, tile_color);
+      DrawRectangleLines(tile_x, tile_y, tile_width, tile_height, BLACK);
 
       piece_x = tile_x + tile_width / 2;
       piece_y = tile_y + tile_height / 2;
 
       if(tile & OCCUPIED_TILE)
       {
-        if(tile & PLAYER_ONE_PIECE) // Is player one piece
-        {
-          DrawCircle(piece_x, piece_y, 30, MAROON);
-          DrawCircleLines(piece_x, piece_y, 05, BLACK);
-          DrawCircleLines(piece_x, piece_y, 15, BLACK);
-          DrawCircleLines(piece_x, piece_y, 30, BLACK);
-        }
-        else if(~tile & PLAYER_ONE_PIECE) // Means is player 2 piece
-        {
-          DrawCircle(piece_x, piece_y, 30, DARKGREEN);
-          DrawCircleLines(piece_x, piece_y, 05, BLACK);
-          DrawCircleLines(piece_x, piece_y, 15, BLACK);
-          DrawCircleLines(piece_x, piece_y, 30, BLACK);
-        }
+        DrawCircle(piece_x, piece_y, 30, piece_color);
+        DrawCircleLines(piece_x, piece_y, 05, BLACK);
+        DrawCircleLines(piece_x, piece_y, 15, BLACK);
+        DrawCircleLines(piece_x, piece_y, 30, BLACK);
       }
+
+
 
       tile_x += tile_width; // Update tile's new right hand pos
-
-
-      // for selected piece redraw both tile and piece
-      // can only ever be one at a time, so not a big deal to redraw
-      if(tile & SELECTED_PIECE) // check for selected status bit
-      {
-        std::cout << "yee yee\n";
-        DrawRectangle(tile_x, tile_y, tile_width, tile_height, GREEN);
-        DrawRectangleLines(tile_x, tile_y, tile_width, tile_height, WHITE);
-      }
-
     }
     tile_x = 0;
     tile_y += tile_height;
@@ -159,6 +151,85 @@ void draw_board(uint16_t arr[][NUM_COLUMNS])
 
 
 }
+
+
+
+/// Subordinate Functions /// 
+
+// void draw_board(uint16_t arr[][NUM_COLUMNS])
+// {
+//   const int tile_width =  TILE_DIMENSION;
+//   const int tile_height = TILE_DIMENSION;
+//   uint16_t tile = 0x0000;
+//   int tile_x = 0;
+//   int tile_y = 0;
+
+//   int piece_x = 0;
+//   int piece_y = 0;
+  
+//   for(int r = 0; r < NUM_ROWS; r++) // Iterate Rows
+//   {
+
+//     for(int c = 0; c < NUM_COLUMNS; c++) // For each tile in each row
+//     {
+
+//       // Draw tile
+
+//       tile = arr[r][c];
+
+//       if(tile & COLORED_TILE) // Check for color bit
+//       {
+//         DrawRectangle(tile_x, tile_y, tile_width, tile_height, OCEAN_BLUE);
+//         DrawRectangleLines(tile_x, tile_y, tile_width, tile_height, BLACK);
+//       }
+//       else // Color bit off == white tile
+//       {
+//         DrawRectangle(tile_x, tile_y, tile_width, tile_height, CREAM);
+//         DrawRectangleLines(tile_x, tile_y, tile_width, tile_height, BLACK);
+//       }
+
+
+//       // Draw piece
+
+//       piece_x = tile_x + tile_width / 2;
+//       piece_y = tile_y + tile_height / 2;
+
+//       if(tile & OCCUPIED_TILE)
+//       {
+//         if(tile & PLAYER_ONE_PIECE) // Is player one piece
+//         {
+//           DrawCircle(piece_x, piece_y, 30, SEASHELL_ORANGE);
+//           DrawCircleLines(piece_x, piece_y, 05, BLACK);
+//           DrawCircleLines(piece_x, piece_y, 15, BLACK);
+//           DrawCircleLines(piece_x, piece_y, 30, BLACK);
+//         }
+//         else if(~tile & PLAYER_ONE_PIECE) // Means is player 2 piece
+//         {
+//           DrawCircle(piece_x, piece_y, 30, ORANGE_CREAM);
+//           DrawCircleLines(piece_x, piece_y, 05, BLACK);
+//           DrawCircleLines(piece_x, piece_y, 15, BLACK);
+//           DrawCircleLines(piece_x, piece_y, 30, BLACK);
+//         }
+//       } 
+//       else if((tile & OCCUPIED_TILE) && (tile & SELECTED_PIECE)) // check for selected status bit
+//       {
+//         DrawRectangle(tile_x, tile_y, tile_width, tile_height, OCEAN_BLUE_SELECTED);
+//         DrawRectangleLines(tile_x, tile_y, tile_width, tile_height, WHITE);
+//       }
+
+//       tile_x += tile_width; // Update tile's new right hand pos
+
+
+
+//     }
+//     tile_x = 0;
+//     tile_y += tile_height;
+//     piece_y = tile_y / 2;
+    
+//   }
+
+
+// }
 
 void init_board(uint16_t arr[NUM_ROWS][NUM_COLUMNS])
 {
@@ -173,7 +244,7 @@ void init_board(uint16_t arr[NUM_ROWS][NUM_COLUMNS])
     for(int c = 0; c < NUM_COLUMNS; c++)
     {
       tile = &arr[r][c]; 
-      *tile |= tile_num; 
+      // *tile |= tile_num; 
 
       // Set tile colors
       if(toggle)
@@ -182,7 +253,7 @@ void init_board(uint16_t arr[NUM_ROWS][NUM_COLUMNS])
       }
       else if (!toggle)
       {
-        *tile &= ~(COLORED_TILE); // 8th bit unset == white tile
+        *tile |= BLANK_TILE; // 8th bit set == colored tile
       }
 
       // Setting up starting pieces

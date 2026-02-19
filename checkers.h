@@ -11,34 +11,42 @@ void print_board_data(uint16_t arr[][NUM_COLUMNS]);
 void draw_board(uint16_t arr[][NUM_COLUMNS]);
 void init_board(uint16_t arr[][NUM_COLUMNS]);
 
+
 enum tile_status
 {
-   COLORED_TILE = 0x0100,
-   OCCUPIED_TILE = 0x0200,
-   PLAYER_ONE_PIECE = 0x0400,
-   KING_PIECE = 0x0800,
-   SELECTED_PIECE = 0x1000,
+   BLANK_TILE = 0x0000,
+   COLORED_TILE = 0x0001,
+   OCCUPIED_TILE = 0x0002,
+   PLAYER_ONE_PIECE = 0x0004,
+   SELECTED_PIECE = 0x0010,
 
-
+   OCCUPIED_PLAYER_ONE_NORMAL = 0x0007,
+   OCCUPIED_PLAYER_TWO_NORMAL = 0x0003,
+   OCCUPIED_PLAYER_ONE_KING = 0x000F,
+   OCCUPIED_PLAYER_TWO_KING = 0x000B,
+   SELECTED_PLAYER_ONE_NORMAL = 0x0017,
+   SELECTED_PLAYER_TWO_NORMAL = 0x0013,
+   SELECTED_PLAYER_ONE_KING = 0x001F,
+   SELECTED_PLAYER_TWO_KING = 0x001B,
 };
 
 /*
-0b // Tile Id (Just its index)
-1b // Tile Id (Just its index)
-2b // Tile Id (Just its index)
-3b // Tile Id (Just its index)
+0b // Color on == color tile, off == white tile
+1b // Occupied Satus // on == is occupied by piece, off == empty tile
+2b // Player // on == Player one piece, off == player two piece
+3b // Piece type on == king piece, off = normal piece
 
-4b // Tile Id (Just its index)
-5b // Tile Id (Just its index)
-6b // Tile Id (Just its index)
-7b // Tile Id (Just its index)
+4b // Selected Status // on == selected, off == selected
+5b 
+6b 
+7b 
 
-8b // Color on == color tile, off == white tile
-9b // Occupied Satus // on == is occupied by piece, off == empty tile
-10b // Player // on == Player one piece, off == player two piece
-11b // Piece type on == king piece, off = normal piece
+8b 
+9b 
+10b 
+11b 
 
-12b // Selected Status // on == selected, off == selected
+12b 
 b
 b
 b
