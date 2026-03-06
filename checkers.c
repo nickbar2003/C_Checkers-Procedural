@@ -1,15 +1,16 @@
 #include "checkers.h"
+#include <stdint.h>
 
 
 
-Color PLAYABLE_COLOR = {0, 129, 167, 255}; // Ocean Blue
-Color OCEAN_BLUE_SELECTED = {0, 129, 167, 100};
+Color COLOR_PLAYABLE_TILE = {0, 129, 167, 255}; // Ocean Blue
 Color AQUA_BLUE = {0, 175, 185, 255};
-Color BLANK_COLOR = {253, 252, 220, 255}; // Blank
-Color PLAYER_TWO_COLOR = {250, 207, 166, 255};
-Color PLAYER_ONE_COLOR = {240, 113, 103, 255};
+Color COLOR_BLANK_TILE = {253, 252, 220, 255}; // Blank
+Color COLOR_PLAYER_TWO = {250, 207, 166, 255};
+Color COLOR_PLAYER_ONE = {240, 113, 103, 255};
 
-int main() {
+int main() 
+{
 
   const uint32_t screen_width = 1440;
   const uint32_t screen_height = 1080;
@@ -28,13 +29,19 @@ int main() {
   InitWindow(screen_width, screen_height, "Checkers");
   SetTargetFPS(60);
 
-  init_board(board);
+  enum err_stat status = init_board(board);
 
+  if(status != SUCCESS)
+  {
+    printf("Board Init Failed\n");
+    return 0;
+  }
+
+
+  /// Game Loop /// 
   while (WindowShouldClose() == false) 
   {
 
-    // Logic
-    
     
     if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
     {
@@ -43,19 +50,35 @@ int main() {
       printf("Left mouse click at %f, %f\n", mouse_pos.x, mouse_pos.y);
 
 
-      column_num = mouse_pos.x / TILE_DIMENSION;
-      row_num = mouse_pos.y / TILE_DIMENSION;
+      // Find which row, column
+      column_num = mouse_pos.x / TILE_DIMENSION; // Divide x coordinate by width of tile
+      row_num = mouse_pos.y / TILE_DIMENSION; // Divide y coordinate by height of tile
 
       printf("Left mouse click at row: %u, column: %u\n", row_num, column_num);
 
-      board[row_num][column_num] |= SELECTED_PIECE;
+      enum err_stat status = service_click(board, row_num, column_num);
+
+      if(status != SUCCESS)
+      {
+        printf("Service Click Failed\n");
+        return 0;
+      }
+
       
     }
     
 
-
     // Drawing
-    draw_board(board);
+
+    enum err_stat status = draw_board(board);
+    
+    if(status != SUCCESS)
+    {
+      printf("Draw Board Failed\n");
+      return 0;
+    }
+
+
 
     BeginDrawing();
     ClearBackground(DARKGRAY);
@@ -80,8 +103,9 @@ int main() {
 
 
 
-void draw_board(uint16_t arr[][NUM_COLUMNS])
+enum err_stat draw_board(uint16_t arr[][NUM_COLUMNS])
 {
+
   const uint8_t tile_width =  TILE_DIMENSION;
   const uint8_t tile_height = TILE_DIMENSION;
 
@@ -102,27 +126,35 @@ void draw_board(uint16_t arr[][NUM_COLUMNS])
     {
       tile = arr[r][c];
 
-      // Drawing
 
-      if(tile & COLORED_TILE) 
+      // Set tile color
+      if(tile & PLAYABLE_TILE) 
       {
-        tile_color = PLAYABLE_COLOR;
+        tile_color = COLOR_PLAYABLE_TILE;
       }
       else 
       {
-        tile_color = BLANK_COLOR;
+        tile_color = COLOR_BLANK_TILE;
       }
 
+      // Set pieces and their color
       if(tile & OCCUPIED_TILE)
       {
         if(tile & PLAYER_ONE_PIECE) // Occupied by player 1
         {
-          piece_color = PLAYER_ONE_COLOR;
+          piece_color = COLOR_PLAYER_ONE;
         }
         else // Occupied by player 2
         {
-          piece_color = PLAYER_TWO_COLOR;
+          piece_color = COLOR_PLAYER_TWO;
         }
+      }
+
+      // Highlight tile and piece if selected
+      if(tile & SELECTED_PIECE)
+      {
+        tile_color.a = 200;
+        piece_color.a = 200;
       }
 
 
@@ -150,89 +182,14 @@ void draw_board(uint16_t arr[][NUM_COLUMNS])
     
   }
 
+  return SUCCESS;
 
 }
 
 
-
 /// Subordinate Functions /// 
 
-// void draw_board(uint16_t arr[][NUM_COLUMNS])
-// {
-//   const int tile_width =  TILE_DIMENSION;
-//   const int tile_height = TILE_DIMENSION;
-//   uint16_t tile = 0x0000;
-//   int tile_x = 0;
-//   int tile_y = 0;
-
-//   int piece_x = 0;
-//   int piece_y = 0;
-  
-//   for(int r = 0; r < NUM_ROWS; r++) // Iterate Rows
-//   {
-
-//     for(int c = 0; c < NUM_COLUMNS; c++) // For each tile in each row
-//     {
-
-//       // Draw tile
-
-//       tile = arr[r][c];
-
-//       if(tile & COLORED_TILE) // Check for color bit
-//       {
-//         DrawRectangle(tile_x, tile_y, tile_width, tile_height, OCEAN_BLUE);
-//         DrawRectangleLines(tile_x, tile_y, tile_width, tile_height, BLACK);
-//       }
-//       else // Color bit off == white tile
-//       {
-//         DrawRectangle(tile_x, tile_y, tile_width, tile_height, CREAM);
-//         DrawRectangleLines(tile_x, tile_y, tile_width, tile_height, BLACK);
-//       }
-
-
-//       // Draw piece
-
-//       piece_x = tile_x + tile_width / 2;
-//       piece_y = tile_y + tile_height / 2;
-
-//       if(tile & OCCUPIED_TILE)
-//       {
-//         if(tile & PLAYER_ONE_PIECE) // Is player one piece
-//         {
-//           DrawCircle(piece_x, piece_y, 30, SEASHELL_ORANGE);
-//           DrawCircleLines(piece_x, piece_y, 05, BLACK);
-//           DrawCircleLines(piece_x, piece_y, 15, BLACK);
-//           DrawCircleLines(piece_x, piece_y, 30, BLACK);
-//         }
-//         else if(~tile & PLAYER_ONE_PIECE) // Means is player 2 piece
-//         {
-//           DrawCircle(piece_x, piece_y, 30, ORANGE_CREAM);
-//           DrawCircleLines(piece_x, piece_y, 05, BLACK);
-//           DrawCircleLines(piece_x, piece_y, 15, BLACK);
-//           DrawCircleLines(piece_x, piece_y, 30, BLACK);
-//         }
-//       } 
-//       else if((tile & OCCUPIED_TILE) && (tile & SELECTED_PIECE)) // check for selected status bit
-//       {
-//         DrawRectangle(tile_x, tile_y, tile_width, tile_height, OCEAN_BLUE_SELECTED);
-//         DrawRectangleLines(tile_x, tile_y, tile_width, tile_height, WHITE);
-//       }
-
-//       tile_x += tile_width; // Update tile's new right hand pos
-
-
-
-//     }
-//     tile_x = 0;
-//     tile_y += tile_height;
-//     piece_y = tile_y / 2;
-    
-//   }
-
-
-// }
-
-void init_board(uint16_t arr[NUM_ROWS][NUM_COLUMNS])
+enum err_stat init_board(uint16_t arr[NUM_ROWS][NUM_COLUMNS])
 {
 
   uint8_t toggle = 0xFF;
@@ -250,20 +207,20 @@ void init_board(uint16_t arr[NUM_ROWS][NUM_COLUMNS])
       // Set tile colors
       if(toggle)
       {
-        *tile |= COLORED_TILE; // 8th bit set == colored tile
+        *tile |= PLAYABLE_TILE; // 8th bit set == playable colored tile
       }
       else if (!toggle)
       {
-        *tile |= BLANK_TILE; // 8th bit set == colored tile
+        *tile |= BLANK_TILE; // 8th bit unset == blank tile
       }
 
       // Setting up starting pieces
-      if(r < 3 && (*tile & COLORED_TILE))
+      if(r < 3 && (*tile & PLAYABLE_TILE))
       {
         *tile |= OCCUPIED_TILE; 
         *tile |= PLAYER_ONE_PIECE; 
       }
-      else if(r > 4 && (*tile & COLORED_TILE))
+      else if(r > 4 && (*tile & PLAYABLE_TILE))
       {
         *tile |= OCCUPIED_TILE; 
         *tile &= ~(PLAYER_ONE_PIECE); 
@@ -276,9 +233,36 @@ void init_board(uint16_t arr[NUM_ROWS][NUM_COLUMNS])
     }
     toggle = ~toggle;
   }
+
+  return SUCCESS;
 }
 
-void print_board_data(uint16_t arr[NUM_ROWS][NUM_COLUMNS])
+
+enum err_stat service_click(uint16_t board[][NUM_COLUMNS], uint8_t row, uint8_t column)
+{
+  uint16_t tile = board[row][column];
+
+  if(tile & PLAYABLE_TILE)
+  {
+
+  }
+
+  // for(int r = 0; r < NUM_ROWS; r++)
+  // {
+  //   printf("| ");
+  //   for(int c = 0; c < NUM_COLUMNS; c++)
+
+  board[row][column] |= SELECTED_PIECE;
+
+
+  return SUCCESS;
+
+}
+
+
+
+
+enum err_stat print_board_data(uint16_t arr[NUM_ROWS][NUM_COLUMNS])
 {
   printf("\n\n\nBoard: \n");
 
@@ -302,4 +286,6 @@ void print_board_data(uint16_t arr[NUM_ROWS][NUM_COLUMNS])
 
   printf("\n");
 
+  return SUCCESS;
 }
+

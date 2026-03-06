@@ -9,15 +9,23 @@
 #define NUM_ROWS 8
 #define NUM_COLUMNS 8
 
-void print_board_data(uint16_t arr[][NUM_COLUMNS]);
-void draw_board(uint16_t arr[][NUM_COLUMNS]);
-void init_board(uint16_t arr[][NUM_COLUMNS]);
 
+
+enum err_stat 
+{
+   SUCCESS,
+   INIT_FAILED
+};
+
+enum err_stat print_board_data(uint16_t arr[][NUM_COLUMNS]);
+enum err_stat draw_board(uint16_t arr[][NUM_COLUMNS]);
+enum err_stat init_board(uint16_t arr[][NUM_COLUMNS]);
+enum err_stat service_click(uint16_t arr[][NUM_COLUMNS], uint8_t row, uint8_t column);
 
 enum tile_status
 {
    BLANK_TILE = 0x0000,
-   COLORED_TILE = 0x0001,
+   PLAYABLE_TILE = 0x0001,
    OCCUPIED_TILE = 0x0002,
    PLAYER_ONE_PIECE = 0x0004,
    SELECTED_PIECE = 0x0010,
