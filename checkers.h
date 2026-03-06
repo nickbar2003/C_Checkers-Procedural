@@ -1,5 +1,7 @@
-#include <cstdint>
-#include <iostream>
+#include <stdint.h>
+// #include <cstdint>
+#include <stdio.h>
+// #include <iostream>
 #include <linux/limits.h>
 #include <raylib.h>
 

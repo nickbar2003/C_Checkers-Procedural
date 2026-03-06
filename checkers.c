@@ -11,11 +11,11 @@ Color PLAYER_ONE_COLOR = {240, 113, 103, 255};
 
 int main() {
 
-  const int screen_width = 1440;
-  const int screen_height = 1080;
+  const uint32_t screen_width = 1440;
+  const uint32_t screen_height = 1080;
 
-  const int num_rows = NUM_ROWS;
-  const int num_columns = NUM_COLUMNS;
+  const uint8_t num_rows = NUM_ROWS;
+  const uint8_t num_columns = NUM_COLUMNS;
 
   uint8_t column_num = -1;
   uint8_t row_num = -1; 
@@ -23,7 +23,7 @@ int main() {
   Vector2 mouse_pos = {-1.0, -1.0};
 
 
-  uint16_t board[num_rows][num_columns] = {};
+  uint16_t board[NUM_ROWS][NUM_COLUMNS] = {};
 
   InitWindow(screen_width, screen_height, "Checkers");
   SetTargetFPS(60);
@@ -40,12 +40,13 @@ int main() {
     {
       mouse_pos = GetMousePosition();
 
-      std::cout << "Left Mouse Click at " << std::to_string(mouse_pos.x) << ", " << std::to_string(mouse_pos.y) << " )\n";
+      printf("Left mouse click at %f, %f\n", mouse_pos.x, mouse_pos.y);
+
 
       column_num = mouse_pos.x / TILE_DIMENSION;
       row_num = mouse_pos.y / TILE_DIMENSION;
 
-      std::cout << "Left Mouse Click at Row: " << std::to_string(row_num) << ", Column: " << std::to_string(column_num) << "\n";
+      printf("Left mouse click at row: %u, column: %u\n", row_num, column_num);
 
       board[row_num][column_num] |= SELECTED_PIECE;
       
@@ -81,8 +82,8 @@ int main() {
 
 void draw_board(uint16_t arr[][NUM_COLUMNS])
 {
-  const int tile_width =  TILE_DIMENSION;
-  const int tile_height = TILE_DIMENSION;
+  const uint8_t tile_width =  TILE_DIMENSION;
+  const uint8_t tile_height = TILE_DIMENSION;
 
   uint16_t tile = 0x0000;
   int tile_x = 0;
@@ -279,25 +280,26 @@ void init_board(uint16_t arr[NUM_ROWS][NUM_COLUMNS])
 
 void print_board_data(uint16_t arr[NUM_ROWS][NUM_COLUMNS])
 {
-  std::cout << "\n\n\nBoard: \n";
+  printf("\n\n\nBoard: \n");
 
 
-  std::cout << "|-----------------------------------------------------------------------|";
-  std::cout << "\n";
+  printf("|-----------------------------------------------------------------------|");
+  printf("\n");
+
   for(int r = 0; r < NUM_ROWS; r++)
   {
-    std::cout << "| ";
+    printf("| ");
     for(int c = 0; c < NUM_COLUMNS; c++)
     {
       printf("0x%04x", arr[r][c]);
-      std::cout << " | ";
+      printf(" | ");
     }
-    std::cout << "\n";
-    std::cout << "|-----------------------------------------------------------------------|";
-    std::cout << "\n";
+    printf("\n");
+    printf("|-----------------------------------------------------------------------|");
+    printf("\n");
     
   }
 
-  std::cout << "\n";
+  printf("\n");
 
 }
