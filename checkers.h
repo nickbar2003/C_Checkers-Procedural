@@ -4,6 +4,7 @@
 // #include <iostream>
 #include <linux/limits.h>
 #include <raylib.h>
+#include <stdlib.h>
 
 #define TILE_DIMENSION 135
 #define NUM_ROWS 8
@@ -14,18 +15,20 @@
 enum err_stat 
 {
    SUCCESS,
-   INIT_FAILED
+   INIT_FAILED,
+   FALSE_FIRST_CLICK
 };
 
 enum err_stat print_board_data(uint16_t arr[][NUM_COLUMNS]);
 enum err_stat draw_board(uint16_t arr[][NUM_COLUMNS]);
 enum err_stat init_board(uint16_t arr[][NUM_COLUMNS]);
-enum err_stat service_click(uint16_t arr[][NUM_COLUMNS], uint8_t row, uint8_t column);
+enum err_stat service_first_click(uint16_t arr[][NUM_COLUMNS],  Vector2);
+enum err_stat service_second_click(uint16_t arr[][NUM_COLUMNS], Vector2, Vector2 **);
 
 enum tile_status
 {
    BLANK_TILE = 0x0000,
-   PLAYABLE_TILE = 0x0001,
+   COLOR_TILE = 0x0001,
    OCCUPIED_TILE = 0x0002,
    PLAYER_ONE_PIECE = 0x0004,
    SELECTED_PIECE = 0x0010,
@@ -41,24 +44,24 @@ enum tile_status
 };
 
 /*
-0b // Color on == color tile, off == white tile
-1b // Occupied Satus // on == is occupied by piece, off == empty tile
-2b // Player // on == Player one piece, off == player two piece
-3b // Piece type on == king piece, off = normal piece
+00b // Color on == color tile, off == white tile
+01b // Occupied Satus // on == is occupied by piece, off == empty tile
+02b // Player // on == Player one piece, off == player two piece
+03b // Piece type on == king piece, off = normal piece
 
-4b // Selected Status // on == selected, off == selected
-5b 
-6b 
-7b 
+04b // Selected Status // ON == selected, OFF == selected
+05b  // Player's Turn // ON == Player 1's turn, OFF == Player 2's turn
+06b 
+07b 
 
-8b 
-9b 
-10b 
-11b 
+08b // Row bit // stores the tile's row 
+09b // Row bit // stores the tile's row 
+10b // Row bit // stores the tile's row 
+11b // Row bit // stores the tile's row 
 
-12b 
-b
-b
-b
+12b // Column bit // stores the tile's column
+13b // Column bit // stores the tile's column
+14b // Column bit // stores the tile's column
+15b // Column bit // stores the tile's column
 
 */

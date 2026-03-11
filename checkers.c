@@ -1,5 +1,6 @@
 #include "checkers.h"
-#include <stdint.h>
+#include <raylib.h>
+#include <time.h>
 
 
 
@@ -18,10 +19,14 @@ int main()
   const uint8_t num_rows = NUM_ROWS;
   const uint8_t num_columns = NUM_COLUMNS;
 
-  uint8_t column_num = -1;
-  uint8_t row_num = -1; 
+  uint8_t new_mou_column = -1;
+  uint8_t new_mou_row = -1; 
 
-  Vector2 mouse_pos = {-1.0, -1.0};
+  Vector2 new_mou_pos = {-1.0, -1.0};
+  Vector2 prev_mou_pos = {-1.0, -1.0};
+
+  uint16_t *prev_clicked_tile = NULL;
+  uint16_t *new_clicked_tile = NULL;
 
 
   uint16_t board[NUM_ROWS][NUM_COLUMNS] = {};
@@ -45,24 +50,50 @@ int main()
     
     if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
     {
-      mouse_pos = GetMousePosition();
+      new_mou_pos = GetMousePosition();
 
-      printf("Left mouse click at %f, %f\n", mouse_pos.x, mouse_pos.y);
-
+      // printf("\n\n\n");
+      // printf("Mouse pos ref: %p, \n", &mouse_pos);
+      // printf("Left mouse click at %f, %f\n", mouse_pos.x, mouse_pos.y);
+      // printf("Left mouse click at row: %u, column: %u\n", row_num, column_num);
+      // printf("\n\n\n");
 
       // Find which row, column
-      column_num = mouse_pos.x / TILE_DIMENSION; // Divide x coordinate by width of tile
-      row_num = mouse_pos.y / TILE_DIMENSION; // Divide y coordinate by height of tile
+      new_mou_column = new_mou_pos.x / TILE_DIMENSION; // Divide x coordinate by width of tile
+      new_mou_row = new_mou_pos.y / TILE_DIMENSION; // Divide y coordinate by height of tile
 
-      printf("Left mouse click at row: %u, column: %u\n", row_num, column_num);
+      new_clicked_tile = &board[new_mou_row][new_mou_column];
 
-      enum err_stat status = service_click(board, row_num, column_num);
-
-      if(status != SUCCESS)
+      if(prev_clicked_tile == NULL)
       {
-        printf("Service Click Failed\n");
-        return 0;
+        // service first click
+
+        if(*new_clicked_tile & COLOR_TILE && *new_clicked_tile & OCCUPIED_TILE) // Selecting a tile
+        {
+          *new_clicked_tile |= SELECTED_PIECE;
+
+          prev_clicked_tile = new_clicked_tile; // Save this click location
+        }
       }
+      else if (prev_clicked_tile != NULL)
+      {
+        // Service second click 
+        if(*new_clicked_tile & SELECTED_PIECE) // Clicked selected tile twice, so unselect
+        {
+          *new_clicked_tile &= ~SELECTED_PIECE;
+
+          prev_clicked_tile = NULL; 
+        }
+
+      }
+
+
+
+      
+
+
+
+
 
       
     }
@@ -128,7 +159,7 @@ enum err_stat draw_board(uint16_t arr[][NUM_COLUMNS])
 
 
       // Set tile color
-      if(tile & PLAYABLE_TILE) 
+      if(tile & COLOR_TILE) 
       {
         tile_color = COLOR_PLAYABLE_TILE;
       }
@@ -207,20 +238,19 @@ enum err_stat init_board(uint16_t arr[NUM_ROWS][NUM_COLUMNS])
       // Set tile colors
       if(toggle)
       {
-        *tile |= PLAYABLE_TILE; // 8th bit set == playable colored tile
+        *tile |= COLOR_TILE; // 8th bit set == playable colored tile
       }
-      else if (!toggle)
       {
         *tile |= BLANK_TILE; // 8th bit unset == blank tile
       }
 
       // Setting up starting pieces
-      if(r < 3 && (*tile & PLAYABLE_TILE))
+      if(r < 3 && (*tile & COLOR_TILE))
       {
         *tile |= OCCUPIED_TILE; 
         *tile |= PLAYER_ONE_PIECE; 
       }
-      else if(r > 4 && (*tile & PLAYABLE_TILE))
+      else if(r > 4 && (*tile & COLOR_TILE))
       {
         *tile |= OCCUPIED_TILE; 
         *tile &= ~(PLAYER_ONE_PIECE); 
@@ -238,27 +268,74 @@ enum err_stat init_board(uint16_t arr[NUM_ROWS][NUM_COLUMNS])
 }
 
 
-enum err_stat service_click(uint16_t board[][NUM_COLUMNS], uint8_t row, uint8_t column)
+enum err_stat service_first_click(uint16_t board[][NUM_COLUMNS], Vector2 mouse_pos)
 {
-  uint16_t tile = board[row][column];
 
-  if(tile & PLAYABLE_TILE)
+  uint8_t column = (mouse_pos).x / TILE_DIMENSION; // Divide x coordinate by width of tile
+  uint8_t row = (mouse_pos).y / TILE_DIMENSION; // Divide y coordinate by height of tile
+
+  uint16_t clicked_tile = board[row][column];
+
+  for(int r = 0; r < NUM_ROWS; r++)
   {
-
+    for(int c = 0; c < NUM_COLUMNS; c++)
+    {
+      if(board[r][c] & SELECTED_PIECE)
+      {
+        return FALSE_FIRST_CLICK;
+      }
+    }
   }
 
-  // for(int r = 0; r < NUM_ROWS; r++)
-  // {
-  //   printf("| ");
-  //   for(int c = 0; c < NUM_COLUMNS; c++)
+  if(clicked_tile & COLOR_TILE && clicked_tile & OCCUPIED_TILE)
+  {
+    board[row][column] |= SELECTED_PIECE;
+  }
 
-  board[row][column] |= SELECTED_PIECE;
+
+
 
 
   return SUCCESS;
 
 }
 
+enum err_stat service_second_click(uint16_t board[][NUM_COLUMNS], Vector2 new_pos, Vector2 ** prev_pos)
+{
+  printf("Service Second Click\n");
+
+  uint8_t new_pos_column = (new_pos).x / TILE_DIMENSION; // Divide x coordinate by width of tile
+  uint8_t new_pos_row = (new_pos).y / TILE_DIMENSION; // Divide y coordinate by height of tile
+
+
+  uint8_t prev_pos_column = (*(prev_pos))->x / TILE_DIMENSION; // Divide x coordinate by width of tile
+  uint8_t prev_pos_row = (*(prev_pos))->y / TILE_DIMENSION; // Divide y coordinate by height of tile
+
+
+  uint16_t * new_clicked_tile = &board[new_pos_row][new_pos_column];
+  uint16_t * prev_clicked_tile = &board[prev_pos_row][prev_pos_column];
+
+
+  if(new_clicked_tile == prev_clicked_tile)
+  {
+    *new_clicked_tile &= ~SELECTED_PIECE;
+    *prev_pos = NULL;
+  }
+  else 
+  {
+  
+  }
+
+
+
+
+
+
+
+
+  return SUCCESS;
+
+}
 
 
 
@@ -289,3 +366,11 @@ enum err_stat print_board_data(uint16_t arr[NUM_ROWS][NUM_COLUMNS])
   return SUCCESS;
 }
 
+
+  // for(int r = 0; r < NUM_ROWS; r++)
+  // {
+  //   for(int c = 0; c < NUM_COLUMNS; c++)
+  //   {
+
+  //   }
+  // }
