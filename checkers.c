@@ -25,9 +25,14 @@ int main()
   Vector2 new_mou_pos = {-1.0, -1.0};
   Vector2 prev_mou_pos = {-1.0, -1.0};
 
-  uint16_t *prev_clicked_tile = NULL;
-  uint16_t *new_clicked_tile = NULL;
+  uint16_t *clicked_tile = NULL;
+  uint16_t *selected_piece = NULL;
 
+  uint16_t clicked_tile_row_num = -1;
+  uint16_t clicked_tile_col_num = -1;
+
+  uint16_t selected_piece_row_num = -1;
+  uint16_t selected_piece_col_num = -1;
 
   uint16_t board[NUM_ROWS][NUM_COLUMNS] = {};
 
@@ -62,28 +67,56 @@ int main()
       new_mou_column = new_mou_pos.x / TILE_DIMENSION; // Divide x coordinate by width of tile
       new_mou_row = new_mou_pos.y / TILE_DIMENSION; // Divide y coordinate by height of tile
 
-      new_clicked_tile = &board[new_mou_row][new_mou_column];
+      clicked_tile = &board[new_mou_row][new_mou_column];
 
-      if(prev_clicked_tile == NULL)
+      if(selected_piece == NULL)
       {
         // service first click
 
-        if(*new_clicked_tile & COLOR_TILE && *new_clicked_tile & OCCUPIED_TILE) // Selecting a tile
+        if(*clicked_tile & COLOR_TILE && *clicked_tile & OCCUPIED_TILE) // Selecting a tile
         {
-          *new_clicked_tile |= SELECTED_PIECE;
+          *clicked_tile |= SELECTED_PIECE;
 
-          prev_clicked_tile = new_clicked_tile; // Save this click location
+          selected_piece = clicked_tile; // Save this click location
         }
       }
-      else if (prev_clicked_tile != NULL)
+      else if (selected_piece != NULL)
       {
         // Service second click 
-        if(*new_clicked_tile & SELECTED_PIECE) // Clicked selected tile twice, so unselect
+        if(*clicked_tile & SELECTED_PIECE) // Clicked selected tile twice, so unselect
         {
-          *new_clicked_tile &= ~SELECTED_PIECE;
+          *clicked_tile &= ~SELECTED_PIECE;
+          
 
-          prev_clicked_tile = NULL; 
+          selected_piece = NULL; 
         }
+
+        if(*clicked_tile & COLOR_TILE && ~(*clicked_tile & OCCUPIED_TILE)) // Selected playable and unoccupied tile
+        {
+          selected_piece_row_num = (*selected_piece & ROW_DATA_MASK) >> ROW_BIT_SHIFTER;
+          selected_piece_col_num = (*selected_piece & COL_DATA_MASK) >> COL_BIT_SHIFTER;
+
+          printf("Selected piece row: 0x%04x\n",   selected_piece_row_num);
+          printf("Selected piece col: 0x%04x\n\n", selected_piece_col_num);
+
+          clicked_tile_row_num = (*clicked_tile & ROW_DATA_MASK) >> ROW_BIT_SHIFTER;
+          clicked_tile_col_num = (*clicked_tile & COL_DATA_MASK) >> COL_BIT_SHIFTER;
+
+          printf("Clicked tile row: 0x%04x\n", clicked_tile_row_num);
+          printf("Clicked tile col: 0x%04x\n\n", clicked_tile_col_num);
+
+          status = move_piece(selected_piece, clicked_tile); // Moving piece to unoccupied tile
+
+          if(status != SUCCESS)
+          {
+            printf("move_piece Failed\n");
+            return 0;
+          }
+
+          selected_piece = NULL;
+
+        }
+
 
       }
 
@@ -127,6 +160,21 @@ int main()
 
 
 
+
+/// Subordinate Functions ///
+
+enum err_stat move_piece(uint16_t* current_piece_pos, uint16_t* new_piece_pos)
+{
+  *current_piece_pos &= ~OCCUPIED_TILE; // Unset occupy bit
+  *current_piece_pos &= ~SELECTED_PIECE; // Unset selected bit
+
+  *new_piece_pos |= OCCUPIED_TILE;
+  *new_piece_pos |= SELECTED_PIECE;
+
+  // TODO: need to update the new tile with the old tiles player related info
+
+  return SUCCESS;
+}
 
 
 
@@ -224,16 +272,16 @@ enum err_stat init_board(uint16_t arr[NUM_ROWS][NUM_COLUMNS])
 {
 
   uint8_t toggle = 0xFF;
-  uint8_t tile_num = 0x00;
   uint16_t *tile= 0x0000;
 
 
-  for(int r = 0; r < NUM_ROWS; r++)
+  for(int row = 0; row < NUM_ROWS; row++)
   {
-    for(int c = 0; c < NUM_COLUMNS; c++)
+    for(int col = 0; col < NUM_COLUMNS; col++)
     {
-      tile = &arr[r][c]; 
-      // *tile |= tile_num; 
+      tile = &arr[row][col]; 
+      *tile |= (row << ROW_BIT_SHIFTER); // Need to shift to change bits related to row pos
+      *tile |= (col << COL_BIT_SHIFTER); // Shift to column position bits
 
       // Set tile colors
       if(toggle)
@@ -245,12 +293,12 @@ enum err_stat init_board(uint16_t arr[NUM_ROWS][NUM_COLUMNS])
       }
 
       // Setting up starting pieces
-      if(r < 3 && (*tile & COLOR_TILE))
+      if(row < 3 && (*tile & COLOR_TILE))
       {
         *tile |= OCCUPIED_TILE; 
         *tile |= PLAYER_ONE_PIECE; 
       }
-      else if(r > 4 && (*tile & COLOR_TILE))
+      else if(row > 4 && (*tile & COLOR_TILE))
       {
         *tile |= OCCUPIED_TILE; 
         *tile &= ~(PLAYER_ONE_PIECE); 
@@ -258,7 +306,7 @@ enum err_stat init_board(uint16_t arr[NUM_ROWS][NUM_COLUMNS])
       }
 
      
-      tile_num += 0x01;
+      // tile_num += 0x01;
       toggle = ~toggle;
     }
     toggle = ~toggle;

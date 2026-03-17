@@ -9,6 +9,10 @@
 #define TILE_DIMENSION 135
 #define NUM_ROWS 8
 #define NUM_COLUMNS 8
+#define ROW_BIT_SHIFTER 0x0008 // Shift to 9th bit for row pos data
+#define COL_BIT_SHIFTER 0x000C // Shift to 13th bit for col pos data
+#define ROW_DATA_MASK 0x0F00 // Shift to 9th bit for row pos data
+#define COL_DATA_MASK 0xF000 // Shift to 13th bit for col pos data
 
 
 
@@ -24,6 +28,7 @@ enum err_stat draw_board(uint16_t arr[][NUM_COLUMNS]);
 enum err_stat init_board(uint16_t arr[][NUM_COLUMNS]);
 enum err_stat service_first_click(uint16_t arr[][NUM_COLUMNS],  Vector2);
 enum err_stat service_second_click(uint16_t arr[][NUM_COLUMNS], Vector2, Vector2 **);
+enum err_stat move_piece(uint16_t*, uint16_t*);
 
 enum tile_status
 {
@@ -45,7 +50,10 @@ enum tile_status
 
 /*
 00b // Color on == color tile, off == white tile
-01b // Occupied Satus // on == is occupied by piece, off == empty tile
+01b // Occupied Satus // ON == is occupied by piece, OFF == empty tile
+
+// Note bits 02-05 only are meaningful if occupied status is ON
+
 02b // Player // on == Player one piece, off == player two piece
 03b // Piece type on == king piece, off = normal piece
 
